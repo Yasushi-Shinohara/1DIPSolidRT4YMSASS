@@ -23,6 +23,7 @@ Atomfluence = halfepsc*Atomtime*1.0e-15 # J/cm^2 ,W/cm^2 * fs = femto J/cm^2
 sys_name = '_'
 cluster_mode = False
 write_ASCII = False #Writting Data to not only *.npz but also ASCII files, only available for Jt
+only_GS = False
 a = 8.0 #Lattice constant
 flat = -1.0 #Length of flat potential
 NG = 12 #Number of grid point in both real/reciprocal space
@@ -68,6 +69,12 @@ elif (argc == 2):
                 write_ASCII = True
             else :
                 write_ASCII = False
+        if (str(text[i]) == 'only_GS') :
+            only_GS = str(text[i+1])
+            if (only_GS=='True'):
+                only_GS = True
+            else :
+                only_GS = False
         if (str(text[i]) == 'a') :
             a = float(str(text[i+1]))
         if (str(text[i]) == 'flat') :
@@ -119,7 +126,7 @@ def Make_vextr():
     beta = 5.0e-2
     gamma = 1.0e-1
     v0 =  0.37
-    vextrloc = -v0*(1.0+np.cos(tpi*x/a))
+    vextrloc = -v0*(1.0 - np.cos(tpi*x/a))
     if (flat > 0.0):
         if (flat > a):
             print('Error: flat is larger than a1.')
@@ -129,12 +136,6 @@ def Make_vextr():
                 vextrloc[ig] = -v0*(1.0 - np.cos(tpi*x[ig]/(a-flat)))
             else : 
                 vextrloc[ig] = 0.0
-        if(not cluster_mode):
-            plt.figure()
-            plt.plot(x1,vextrloc,label='The local potential')
-            plt.grid()
-            plt.legend()
-            plt.show()
     return vextrloc
 vextr = Make_vextr()
 vsG = np.fft.fft(vextr)/np.float(NG)
@@ -162,12 +163,31 @@ Eg = np.amin(epsbk[Nocc,:])-np.amax(epsbk[Nocc-1,:])
 print('Eg = '+str(Eg)+' a.u. = '+str(Hartree*Eg)+' eV')
 
 #Plot the band
+def potential_plot():
+    plt.figure()
+    plt.xlabel('$x$ [a.u.]')
+    plt.ylabel('Potential energy [eV]')
+    plt.plot(x,vextr*Hartree,label='The local potential')
+    plt.grid()
+    plt.legend()
+    plt.show()
 def Band_plot():
+    plt.figure()
+    plt.xlabel('$k$ [a.u.]')
+    plt.ylabel('Band energy [eV]')
     for ib in range(4):
         plt.plot(k,epsbk[ib,:]*Hartree)
+    plt.grid()
     plt.show()
 if(not cluster_mode):
+    potential_plot()
     Band_plot()
+
+if(only_GS):
+    print('Band calculation is done properly.    ')
+    print('######################################')
+    sys.exit()
+
 
 T = float(NT)*dt
 print('========Temporal grid information======')
