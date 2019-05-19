@@ -184,8 +184,12 @@ def Band_plot():
     plt.figure()
     plt.xlabel('$k$ [a.u.]')
     plt.ylabel('Band energy [eV]')
-    for ib in range(4):
-        plt.plot(k,epsbk[ib,:]*Hartree)
+    if (NK > 30):
+        for ib in range(4):
+            plt.plot(k,epsbk[ib,:]*Hartree)
+    else :
+        for ib in range(4):
+            plt.plot(k,epsbk[ib,:]*Hartree,'o-')
     plt.grid()
     plt.show()
 if(not cluster_mode):
