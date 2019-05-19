@@ -23,7 +23,6 @@ Atomfluence = halfepsc*Atomtime*1.0e-15 # J/cm^2 ,W/cm^2 * fs = femto J/cm^2
 sys_name = '_'
 cluster_mode = False
 write_ASCII = False #Writting Data to not only *.npz but also ASCII files, only available for Jt
-Wannier_option = False #Polarization calculation from Wannier function
 a1 = 8.0 #Lattice constant
 flat = -1.0 #Length of flat potential
 NG1 = 12 #Number of grid point in both real/reciprocal space
@@ -77,12 +76,6 @@ elif (argc == 2):
                 write_ASCII = True
             else :
                 write_ASCII = False
-        if (str(text[i]) == 'Wannier_option') :
-            Wannier_option = str(text[i+1])
-            if (Wannier_option=='True'):
-                Wannier_option = True
-            else :
-                Wannier_option = False
         if (str(text[i]) == 'a1') :
             a1 = float(str(text[i+1]))
         if (str(text[i]) == 'flat') :
@@ -193,93 +186,6 @@ def Band_plot():
     plt.show()
 if(not cluster_mode):
     Band_plot()
-def Wannier_func_init(R):
-    ubkx = np.fft.ifft(ubkG,axis=0)
-#Preconditioning for phase matching
-    smooth_opt = 2
-    if (smooth_opt==0):
-        print('No smoothing')
-    elif (smooth_opt==1):
-        print('Smoothing by equaling a phase of a spatial point')
-        phaseub = ubkx[NG1//2,:,:]/np.abs(ubkx[NG1//2,:,:])
-        phaseub = ubkx[0,:,:]/np.abs(ubkx[0,:,:])
-        for ix in range(NG1):
-            ubkx[ix,:,:] = ubkx[ix,:,:]/phaseub[:,:]
-    elif (smooth_opt==2):
-        print('Smoothing by matrix element')
-        phaseub = np.zeros([NG1,NK1],dtype='complex128')
-        for ik in range(NK1):
-            for ib in range(NG1):
-                phaseub[ib,ik] = np.vdot(ubkx[:,ib,0],ubkx[:,ib,ik])
-        phaseub = phaseub/np.abs(phaseub)
-        for ix in range(NG1):
-            ubkx[ix,:,:] = ubkx[ix,:,:]/phaseub[:,:]
-    psibkX = np.zeros([NG1*NK1,NG1,NK1],dtype='complex128')
-    X = np.zeros([NG1*NK1],dtype='float64')
-    X[0:NG1] = 1.0*x1[0:NG1]
-    for ik in range(NK1):
-        eikx = np.exp(zI*k1[ik]*(x1[:]-R))
-        for ib in range(NG1):
-            psibkX[0:NG1,ib,ik] = eikx[:]*ubkx[0:NG1,ib,ik]
-    for n in range(1,NK1):
-        X[n*NG1:(n+1)*NG1] = X[(n-1)*NG1:n*NG1] + a1
-        eika = np.exp(zI*k1[:]*a1)
-        for ib in range(NG1):
-            psibkX[n*NG1:(n+1)*NG1,ib,:] = eika[:]*psibkX[(n-1)*NG1:n*NG1,ib,:] 
-    wbX = np.sum(psibkX,axis=2)/float(NK1)
-    if(not cluster_mode):
-        plt.xlabel('Site [a], a='+str(a1)+' a.u.')
-        for ib in range(4):
-            plt.plot(X/a1,np.abs(wbX[:,ib]),label=str(ib))
-        plt.legend()
-        plt.show()
-        plt.xlabel('Site [a], a='+str(a1)+' a.u.')
-        plt.yscale('log')
-        for ib in range(4):
-            plt.plot(X/a1,np.abs(wbX[:,ib]),label=str(ib))
-        plt.legend()
-        plt.show()
-        plt.xlabel('Site [a], a='+str(a1)+' a.u.')
-        plt.xlim(R/a1 - 4.0,R/a1 + 4.0)
-        for ib in range(4):
-            plt.plot(X/a1,np.abs(wbX[:,ib]),label=str(ib))
-        plt.legend()
-        plt.show()
-    wbX2 = np.abs(wbX)**2
-    dX = X[1]-X[0]
-    print('norm for Wannier func. = '+str(np.sum(wbX2[:,0])*dX))
-    Pb = np.dot(X,wbX2)*dX
-    Pb = Pb.T
-    print('Polarizations, = '+str(Pb[0]/a1)+',  '+str(Pb[1]/a1))
-    temp = np.fft.fft(ubkx,axis=0)
-    return temp
-if(Wannier_option):
-    ubkG = Wannier_func_init(NK1//2*a1)
-#    sys.exit() #debug
-
-def ubkG_wbX(ubkG,R):
-    ubkx = np.fft.ifft(ubkG,axis=0)
-    psibkX = np.zeros([NG1*NK1,NG1,NK1],dtype='complex128')
-    X = np.zeros([NG1*NK1],dtype='float64')
-    X[0:NG1] = 1.0*x1[0:NG1]
-    for ik in range(NK1):
-        eikx = np.exp(zI*k1[ik]*(x1[:]-R))
-        for ib in range(NG1):
-            psibkX[0:NG1,ib,ik] = eikx[:]*ubkx[0:NG1,ib,ik]
-    for n in range(1,NK1):
-        X[n*NG1:(n+1)*NG1] = X[(n-1)*NG1:n*NG1] + a1
-        eika = np.exp(zI*k1[:]*a1)
-        for ib in range(NG1):
-            psibkX[n*NG1:(n+1)*NG1,ib,:] = eika[:]*psibkX[(n-1)*NG1:n*NG1,ib,:] 
-    wbX = np.sum(psibkX,axis=2)/float(NK1)
-    return X, wbX
-def wbX_Pb(X,wbX):
-    wbX2 = np.abs(wbX)**2
-    dX = X[1]-X[0]
-    Pb = np.dot(X,wbX2)*dX
-    Pb = Pb.T/a1*2.0
-    return Pb
-
 
 T = float(NT)*dt
 print('========Temporal grid information======')
@@ -296,9 +202,6 @@ tt = np.zeros(NT,dtype='float64')
 for it in range(NT):
     tt[it] = it*dt
 Jt = np.zeros(NT,dtype='float64')
-if(Wannier_option):
-    Pt = np.zeros(NT,dtype='float64')
-    wbXt = np.zeros([NG1*NK1,NG1,NT],dtype='complex128') #Wannier function
 # Conversion to atomic unit from SI input
 omegac1 = omegac1/Hartree #Conversion to atomic unit
 E1 = E1/Atomfield #Conversion to atomic unit
@@ -442,11 +345,6 @@ print('Time-evolution starts.          ')
 for it in range(NT):
     Jt[it] = occbkubkG_J(occbk,ubkG,At[it])
     hk = Make_hk(At[it])
-    if(Wannier_option):
-        X, wbX = ubkG_wbX(ubkG,NK1//2*a1)
-        wbXt[:,:,it] = 1.0*wbX[:,:]
-        Pb = wbX_Pb(X,wbX)
-        Pt[it] = np.sum(Pb[0:Nocc])
     for ik in range(NK1):
         U = h_U(hk[:,:,ik])
         ubkG[:,:,ik] = np.dot(U,ubkG[:,:,ik])
@@ -454,8 +352,6 @@ for it in range(NT):
         dns = occbkubkG_dns(occbk,ubkG)
         Etot = occbkubkG_Etot(occbk,ubkG,At[it])
         print(it,np.sum(dns)*H1, Jt[it], Etot)
-        if(Wannier_option):
-            print('Pt = '+str(Pt[it]))
 print('Time-evolution ends.            ')
 print('################################')
 np.savez(sys_name+'Jt.npz',tt=tt,Jt=Jt)
@@ -472,31 +368,6 @@ if(not cluster_mode):
     plt.show()
         
 
-if(Wannier_option):
-    Jt2 = 0.0*Jt
-    dt = tt[1] - tt[0]
-    for it in range(1,NT-1):
-        Jt2[it] = 0.5*(Pt[it+1] - Pt[it-1])/dt
-    Jt2[0] = 2.0*Jt2[1] - Jt2[2]
-    Jt2[NT-1] = 2.0*Jt2[NT-2] - Jt2[NT-3]
-    if(not cluster_mode):
-        plt.xlabel('Time [fs]')
-        plt.ylabel('Current')
-        plt.plot(tt*Atomtime,Jt)
-        plt.plot(tt*Atomtime,Jt2)
-        plt.show()
-        plt.xlabel('Time [fs]')
-        plt.ylabel('Site [a], a='+str(a1)+' a.u.')
-        plt.contourf(tt*Atomtime,X/a1,np.abs(wbXt[:,0,:]),50)
-        plt.show()
-        plt.xlabel('Time [fs]')
-        plt.ylabel('Site [a], a='+str(a1)+' a.u.')
-        plt.contourf(tt*Atomtime,X/a1,np.abs(wbXt[:,1,:]),50)
-        plt.show()
-#    np.savez(sys_name+'wbXt.npz',tt=tt,X=X,wbXt=wbXt)
-    np.savez(sys_name+'Pt.npz',tt=tt,Pt=Pt)
-    np.savez(sys_name+'Jt2.npz',tt=tt,Jt2=Jt2)
-    sys.exit()
 
 #Taking filter in real-time
 omega = np.fft.fftfreq(NT)*(tpi/dt)
