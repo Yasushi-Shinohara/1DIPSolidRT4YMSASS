@@ -31,19 +31,11 @@ Nave = 4.0  #Number of particle in a cell
 NT = 4000 #Number of time steps
 dt = 5.0e-1 #Size of a time-step
 # Giving parameters for the field
-omegac1 = 0.3875 #eV: Center frequency
-E1 = 0.9*1.843 #V/nm: Field strength
-#E1 = 1.65 #V/nm: Field strength
-#E1 = 6.0*b1*omegac1
-Tpulse1 = 2.0*48.33 #femtosecond: Pulse duration parameter
-Tpulse1 = 40.00
-phiCEP1 = 0.25 #tpi
-Delay1 = 0.0
-omegac2 = 0.3875 #eV: Center frequency
-E2 = 0.0*1.843 #V/nm: Field strength
-Tpulse2 = 40.00
-phiCEP2 = 0.25 #tpi
-Delay2 = 0.0
+omegac = 0.3875 #eV: Center frequency
+E = 0.9*1.843 #V/nm: Field strength
+Tpulse = 40.00
+phiCEP = 0.25 #tpi
+Delay = 0.0
 nenvelope = 4
 
 argv = sys.argv
@@ -90,26 +82,16 @@ elif (argc == 2):
             NT = int(str(text[i+1]))
         if (str(text[i]) == 'dt') :
             dt = float(str(text[i+1]))
-        if (str(text[i]) == 'omegac1') :
-            omegac1 = float(str(text[i+1]))
-        if (str(text[i]) == 'E1') :
-            E1 = float(str(text[i+1]))
-        if (str(text[i]) == 'Tpulse1') :
-            Tpulse1 = float(str(text[i+1]))
-        if (str(text[i]) == 'phiCEP1') :
-            phiCEP1 = float(str(text[i+1]))
-        if (str(text[i]) == 'Delay1') :
-            Delay1 = float(str(text[i+1]))
-        if (str(text[i]) == 'omegac2') :
-            omegac2 = float(str(text[i+1]))
-        if (str(text[i]) == 'E2') :
-            E2 = float(str(text[i+1]))
-        if (str(text[i]) == 'Tpulse2') :
-            Tpulse2 = float(str(text[i+1]))
-        if (str(text[i]) == 'phiCEP2') :
-            phiCEP2 = float(str(text[i+1]))
-        if (str(text[i]) == 'Delay2') :
-            Delay2 = float(str(text[i+1]))
+        if (str(text[i]) == 'omegac') :
+            omegac = float(str(text[i+1]))
+        if (str(text[i]) == 'E') :
+            E = float(str(text[i+1]))
+        if (str(text[i]) == 'Tpulse') :
+            Tpulse = float(str(text[i+1]))
+        if (str(text[i]) == 'phiCEP') :
+            phiCEP = float(str(text[i+1]))
+        if (str(text[i]) == 'Delay') :
+            Delay = float(str(text[i+1]))
         if (str(text[i]) == 'nenvelope') :
             nenvelope = int(str(text[i+1]))
 else :
@@ -203,57 +185,40 @@ for it in range(NT):
     tt[it] = it*dt
 Jt = np.zeros(NT,dtype='float64')
 # Conversion to atomic unit from SI input
-omegac1 = omegac1/Hartree #Conversion to atomic unit
-E1 = E1/Atomfield #Conversion to atomic unit
-Tpulse1 = Tpulse1/Atomtime #Conversion to atomic unit
-phiCEP1 = phiCEP1*tpi
-Delay1 = Delay1/Atomtime
-omegac2 = omegac2/Hartree #Conversion to atomic unit
-E2 = E2/Atomfield #Conversion to atomic unit
-Tpulse2 = Tpulse2/Atomtime #Conversion to atomic unit
-phiCEP2 = phiCEP2*tpi
-Delay2 = Delay2/Atomtime
+omegac = omegac/Hartree #Conversion to atomic unit
+E = E/Atomfield #Conversion to atomic unit
+Tpulse = Tpulse/Atomtime #Conversion to atomic unit
+phiCEP = phiCEP*tpi
+Delay = Delay/Atomtime
 
 print('========Laser profile======')
-print ('Frequency is '+str(omegac1)+' in atomic unit and '+str(omegac1*Hartree)+' in eV.')
-print ('Corresponding period is {:f} in a.u. and {:f} in femtosecond.'.format(tpi/omegac1,tpi/omegac1*Atomtime))
-print ('Corresponding wave length of light is '+str(ch/(omegac1*Hartree))+' in nanometer.')
+print ('Frequency is '+str(omegac)+' in atomic unit and '+str(omegac*Hartree)+' in eV.')
+print ('Corresponding period is {:f} in a.u. and {:f} in femtosecond.'.format(tpi/omegac,tpi/omegac*Atomtime))
+print ('Corresponding wave length of light is '+str(ch/(omegac*Hartree))+' in nanometer.')
 print ('')
 print ('Carrier envelope phase (CEP) is defined as f(t)*cos(w(t-Tpeak) + phi), f is an envelope function peaked at t=Tpeak.')
-print ('1st CEP value is {:f} in a unit of tpi.'.format(phiCEP1/tpi))
-print ('2nd CEP value is {:f} in a unit of tpi.'.format(phiCEP2/tpi))
+print ('The CEP value is {:f} in a unit of tpi.'.format(phiCEP/tpi))
 print ('')
-print ('1st Field strength E1 is '+str(E1)+' in atomic unit and '+str(E1*Atomfield)+' in V/nm.')
-print ('Corresponding intensity is {:0.6e} in W/cm^2 '.format(E1**2*halfepsc))
-print ('(E1 x a) is '+str(E1*a1)+' in atomic unit and ' + str(E1*a1*Hartree)+ ' in eV.')
-print ('2nd Field strength E2 is '+str(E2)+' in atomic unit and '+str(E2*Atomfield)+' in V/nm.')
-print ('Corresponding intensity is {:0.6e} in W/cm^2 '.format(E2**2*halfepsc))
-print ('(E1 x a) is '+str(E2*a1)+' in atomic unit and ' + str(E2*a1*Hartree)+ ' in eV.')
+print ('The field strength E1 is '+str(E)+' in atomic unit and '+str(E*Atomfield)+' in V/nm.')
+print ('Corresponding intensity is {:0.6e} in W/cm^2 '.format(E**2*halfepsc))
+print ('(E x a) is '+str(E*a1)+' in atomic unit and ' + str(E*a1*Hartree)+ ' in eV.')
 print ('')
-print ('A parameter for 1st pulse duraion Tpulse1 is '+str(Tpulse1)+' in atomic unit and '+str(Tpulse1*Atomtime)+' in femtosecond.')
-print ('Corresponding energy is '+str(tpi/Tpulse1)+' in a.u. and '+str(tpi/Tpulse1*Hartree)+' in eV.')
-print ('Another parameter for 2nd pulse duraion Tpulse2 is '+str(Tpulse2)+' in atomic unit and '+str(Tpulse2*Atomtime)+' in femtosecond.')
-print ('Corresponding energy is '+str(tpi/Tpulse2)+' in a.u. and '+str(tpi/Tpulse2*Hartree)+' in eV.')
+print ('A parameter for the pulse duraion Tpulse is '+str(Tpulse)+' in atomic unit and '+str(Tpulse*Atomtime)+' in femtosecond.')
+print ('Corresponding energy is '+str(tpi/Tpulse)+' in a.u. and '+str(tpi/Tpulse*Hartree)+' in eV.')
 print ('')
-print ('Number of cycle in a pulse, Tpulse1*freqc1, is {:f}.'.format(Tpulse1/(tpi/omegac1)))
-print ('Number of cycle in another pulse, Tpulse2*freqc2, is {:f}.'.format(Tpulse2/(tpi/omegac2)))
+print ('Number of cycle in a pulse, Tpulse*freqc, is {:f}.'.format(Tpulse/(tpi/omegac)))
 print ('')
 
 #Field construction
 def Make_AtEt():
     At = np.zeros(NT,dtype='float64')
     Et = np.zeros(NT,dtype='float64')
-    A1 = E1/omegac1
-    A2 = E2/omegac2
-    envelope1 = np.zeros(NT,dtype='float64')
-    envelope2 = np.zeros(NT,dtype='float64')
+    A = E/omegac
+    envelope = np.zeros(NT,dtype='float64')
     for it in range(NT):
-        if ((Delay1 < tt[it] )and(tt[it] < Tpulse1 + Delay1)):
-            envelope1[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0 - Delay1)))**nenvelope
-        if ((Delay2 < tt[it] )and(tt[it] < Tpulse2 + Delay2)):
-            envelope2[it] = (np.cos(pi/(Tpulse2)*(tt[it]-Tpulse2/2.0 - Delay2)))**nenvelope
-    At = A1*envelope1*np.cos(omegac1*(tt - Tpulse1/2.0 - Delay1)+phiCEP1) \
-        + A2*envelope2*np.cos(omegac2*(tt - Tpulse2/2.0 - Delay2)+phiCEP2)
+        if ((Delay < tt[it] )and(tt[it] < Tpulse + Delay)):
+            envelope[it] = (np.cos(pi/(Tpulse)*(tt[it]-Tpulse/2.0 - Delay)))**nenvelope
+    At = A*envelope*np.cos(omegac*(tt - Tpulse/2.0 - Delay)+phiCEP) 
     for it in range(1,NT-1):
         Et[it] = -(At[it+1] - At[it-1])/2.0/dt
         Et[0] = 2.0*Et[1] - Et[2]
@@ -354,16 +319,13 @@ if(not cluster_mode):
 
 #Taking filter in real-time
 omega = np.fft.fftfreq(NT)*(tpi/dt)
-envelope1 = 1.0 - 3.0*(tt/T)**2 + 2.0*(tt/T)**3
-Jomega = np.fft.fft(envelope1*Jt)
-envelope1 = np.zeros(NT,dtype='float64')
-envelope2 = np.zeros(NT,dtype='float64')
+envelope = 1.0 - 3.0*(tt/T)**2 + 2.0*(tt/T)**3
+Jomega = np.fft.fft(envelope*Jt)
+envelope = np.zeros(NT,dtype='float64')
 for it in range(NT):
-    if ((Delay1 < tt[it] )and(tt[it] < Tpulse1 + Delay1)):
-        envelope1[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0 - Delay1)))**nenvelope
-if (np.abs(E2) > 0.1):
-    print('WARNING: The way to have enevelope function is starnge.')
-Jt_filter = (envelope1+envelope2)*Jt
+    if ((Delay < tt[it] )and(tt[it] < Tpulse + Delay)):
+        envelope[it] = (np.cos(pi/(Tpulse)*(tt[it]-Tpulse/2.0 - Delay)))**nenvelope
+Jt_filter = envelope*Jt
 Jomega_filter = np.fft.fft(Jt_filter)
 
 
@@ -374,8 +336,8 @@ def Jomega_plot():
     plt.xlabel('Harmonic order')
     plt.xlim(0,500.0)
     plt.yscale('log')
-    plt.plot(omega[:NT//2]/omegac1,np.abs(Jomega[:NT//2]),label='J(w)')
-    plt.plot(omega[:NT//2]/omegac1,np.abs(Jomega_filter[:NT//2]),label='J_filter(w)')
+    plt.plot(omega[:NT//2]/omegac,np.abs(Jomega[:NT//2]),label='J(w)')
+    plt.plot(omega[:NT//2]/omegac,np.abs(Jomega_filter[:NT//2]),label='J_filter(w)')
     plt.legend()
     plt.show()
     plt.xlabel('eV')
