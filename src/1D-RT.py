@@ -230,7 +230,6 @@ print ('2nd Field strength E2 is '+str(E2)+' in atomic unit and '+str(E2*Atomfie
 print ('Corresponding intensity is {:0.6e} in W/cm^2 '.format(E2**2*halfepsc))
 print ('(E1 x a) is '+str(E2*a1)+' in atomic unit and ' + str(E2*a1*Hartree)+ ' in eV.')
 print ('')
-#print ('FWHM for Pulse duraion is '+str(Tpulse1)+' in atomic unit and '+str(Tpulse1*Atomtime)+' in femtosecond.')
 print ('A parameter for 1st pulse duraion Tpulse1 is '+str(Tpulse1)+' in atomic unit and '+str(Tpulse1*Atomtime)+' in femtosecond.')
 print ('Corresponding energy is '+str(tpi/Tpulse1)+' in a.u. and '+str(tpi/Tpulse1*Hartree)+' in eV.')
 print ('Another parameter for 2nd pulse duraion Tpulse2 is '+str(Tpulse2)+' in atomic unit and '+str(Tpulse2*Atomtime)+' in femtosecond.')
@@ -255,18 +254,6 @@ def Make_AtEt():
             envelope2[it] = (np.cos(pi/(Tpulse2)*(tt[it]-Tpulse2/2.0 - Delay2)))**nenvelope
     At = A1*envelope1*np.cos(omegac1*(tt - Tpulse1/2.0 - Delay1)+phiCEP1) \
         + A2*envelope2*np.cos(omegac2*(tt - Tpulse2/2.0 - Delay2)+phiCEP2)
-#    envelope1 = envelope1*np.cos(omegac1*(tt - Tpulse1/2.0 - Delay1)+phiCEP1)
-#    envelope2 = envelope2*np.cos(omegac2*(tt - Tpulse2/2.0 - Delay2)+phiCEP2)
-#debug
-#    plt.xlabel('fs')
-#    plt.plot(tt*Atomtime,envelope1)
-#    plt.plot(tt*Atomtime,envelope2)
-#    plt.show()
-#debug
-#    NTpulse1 = int(Tpulse1/dt)
-#    for it in range(NTpulse1):
-#        At[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0)))**nenvelope*np.cos(omegac1*(tt[it]-Tpulse1/2.0)+phiCEP1)
-#    At = -A0*At
     for it in range(1,NT-1):
         Et[it] = -(At[it+1] - At[it-1])/2.0/dt
         Et[0] = 2.0*Et[1] - Et[2]
@@ -308,10 +295,8 @@ print('Check for dns, '+str(np.sum(dns)*H1))
 
 def occbkubkG_J(occbkloc,ubkGloc,Aloc): #Exact formula should be checked=========
     Jloc = 0.0
-#    NBactloc = np.shape(ubkGloc)[1]
     for ik in range(NK1):
         kloc = k1[ik] + Aloc
-#        for ib in range(NBactloc):
         for ib in range(NG1):
             Jloc = Jloc + occbk[ib,ik]*(np.sum(G1[:]*(np.abs(ubkGloc[:,ib,ik]))**2)*a1/float(NG1**2)+kloc)
     return Jloc/a1
@@ -320,11 +305,9 @@ print('Check for current, '+str(J))
 
 def occbkubkG_Etot(occbkloc,ubkGloc,Aloc): #Exact formula should be checked=========
     Etotloc = 0.0
-#    NBactloc = np.shape(ubkGloc)[1]
     hkloc = Make_hk(0.0)
     for ik in range(NK1):
         hubGloc = np.dot(hkloc[:,:,ik],ubkGloc[:,:,ik])
-#        for ib in range(NBactloc):
         for ib in range(NG1):
             Etotloc = Etotloc + occbk[ib,ik]*np.real(np.vdot(ubkGloc[:,ib,ik],hubGloc[:,ib]))
     return Etotloc*a1/float(NG1**2) #orbital function is normalized to give correct number of particle in the cell.
@@ -378,14 +361,9 @@ envelope2 = np.zeros(NT,dtype='float64')
 for it in range(NT):
     if ((Delay1 < tt[it] )and(tt[it] < Tpulse1 + Delay1)):
         envelope1[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0 - Delay1)))**nenvelope
-#    if ((Delay2 < tt[it] )and(tt[it] < Tpulse2 + Delay2)):
-#        envelope2[it] = (np.cos(pi/(Tpulse2)*(tt[it]-Tpulse2/2.0 - Delay2)))**nenvelope
 if (np.abs(E2) > 0.1):
     print('WARNING: The way to have enevelope function is starnge.')
 Jt_filter = (envelope1+envelope2)*Jt
-#Jt_filter = 0.0*Jt
-#for it in range(NTpulse1):
-#    Jt_filter[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0)))**nenvelope*Jt[it]
 Jomega_filter = np.fft.fft(Jt_filter)
 
 
@@ -425,7 +403,6 @@ def Gaboranalys_plot(twidth,Nshift,emax):
     print('twidth ='+str(twidth)+' a.u. = '+str(twidth*Atomtime)+' fs')
     print('2pi/twidth ='+str(tpi/twidth)+' a.u. = '+str(tpi/twidth*Hartree)+' eV')
     tshift, JGaboromega = Gabor_transform(twidth,Nshift)
-#tshift.size
     plt.xlabel('fs')
     plt.ylabel('eV')
     plt.ylim(0.0,emax)
