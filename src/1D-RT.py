@@ -160,7 +160,16 @@ for ik in range(NK):
     epsbk[:,ik], ubkG[:,:,ik] = np.linalg.eigh(hk[:,:,ik])
 ubkG = ubkG/np.sqrt(a)*float(NG) #Normalization
 Eg = np.amin(epsbk[Nocc,:])-np.amax(epsbk[Nocc-1,:])
-print('Eg = '+str(Eg)+' a.u. = '+str(Hartree*Eg)+' eV')
+print('========Material profile======')
+print('The lattice cnstant, a, is '+str(a)+' in atomic unit and '+str(a*aB)+' in nm.')
+print('The reciprocal lattice vector length, b, is '+str(b)+' in atomic unit and '+str(b/aB)+' in /nm.')
+print('')
+print('Number of spatial grid, NG, is '+str(NG)+'.')
+print('The size of the spatial grid is '+str(H)+' in atomic unit and '+str(H*aB)+' in nm.')
+print('Corresponding kinetic energy, (1/2)*(pi/H)**2, is '+str((pi/H)**2/2.0)+' in atomic unit and '+str((pi/H)**2/2.0*Hartree)+' in eV.')
+print('Number of Brillouin zone sampling, NK, is '+str(NK)+'.')
+print('')
+print('Band gap: Eg = '+str(Eg)+' a.u. = '+str(Hartree*Eg)+' eV')
 
 #Plot the band
 def potential_plot():

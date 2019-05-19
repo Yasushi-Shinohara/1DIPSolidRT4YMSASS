@@ -1,2 +1,12 @@
+#An option for just calculating ground-state band calc.
 only_GS
   True
+#The lattice constant in a.u.
+a
+  8.0
+#Number of plane wave, equivalentlly no. of spatial grids
+NG
+  12
+#Number of Brillouin zone sampling
+NK
+  20
