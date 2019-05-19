@@ -23,10 +23,10 @@ Atomfluence = halfepsc*Atomtime*1.0e-15 # J/cm^2 ,W/cm^2 * fs = femto J/cm^2
 sys_name = '_'
 cluster_mode = False
 write_ASCII = False #Writting Data to not only *.npz but also ASCII files, only available for Jt
-a1 = 8.0 #Lattice constant
+a = 8.0 #Lattice constant
 flat = -1.0 #Length of flat potential
-NG1 = 12 #Number of grid point in both real/reciprocal space
-NK1 = 20 #Number of grid point along 1-axis in Brillouin zone
+NG = 12 #Number of grid point in both real/reciprocal space
+NK = 20 #Number of grid point along 1-axis in Brillouin zone
 Nave = 4.0  #Number of particle in a cell
 NT = 4000 #Number of time steps
 dt = 5.0e-1 #Size of a time-step
@@ -68,14 +68,14 @@ elif (argc == 2):
                 write_ASCII = True
             else :
                 write_ASCII = False
-        if (str(text[i]) == 'a1') :
-            a1 = float(str(text[i+1]))
+        if (str(text[i]) == 'a') :
+            a = float(str(text[i+1]))
         if (str(text[i]) == 'flat') :
             flat = float(str(text[i+1]))
-        if (str(text[i]) == 'NG1') :
-            NG1 = int(str(text[i+1]))
-        if (str(text[i]) == 'NK1') :
-            NK1 = int(str(text[i+1]))
+        if (str(text[i]) == 'NG') :
+            NG = int(str(text[i+1]))
+        if (str(text[i]) == 'NK') :
+            NK = int(str(text[i+1]))
         if (str(text[i]) == 'Nave') :
             Nave = int(str(text[i+1]))
         if (str(text[i]) == 'NT') :
@@ -98,35 +98,35 @@ else :
     sys.exit('Error: Number of argument is wrong.')
 
 #Primitive cell construction
-b1 = tpi/a1
-H1 = a1/np.float(NG1)
-x1 = np.linspace(0.0,a1,num=NG1,endpoint=False,dtype='float64')
-G1 = np.fft.fftfreq(NG1)*(b1*np.float(NG1))
+b = tpi/a
+H = a/np.float(NG)
+x = np.linspace(0.0, a, num=NG, endpoint=False, dtype='float64')
+G = np.fft.fftfreq(NG)*(b*np.float(NG))
 #Brillouin zone construction
-k1 = np.linspace(-0.5*b1,0.5*b1,num=NK1,endpoint=False,dtype='float64')
-k1 = k1 + (0.5*b1)/np.float(NK1)
+k = np.linspace(-0.5*b, 0.5*b, num=NK, endpoint=False, dtype='float64')
+k = k + (0.5*b)/np.float(NK)
 
-ubkG = np.zeros([NG1,NG1,NK1],dtype='complex128') #Wave function in reciprocal space
-hk = np.zeros([NG1,NG1,NK1],dtype='complex128') #Hamiltonian in terms of reciprocal space
-epsbk = np.zeros([NG1,NK1],dtype='float64') #Hamiltonian in terms of reciprocal space
-occbk = np.zeros([NG1,NK1],dtype='float64') #Occupation number
+ubkG = np.zeros([NG,NG,NK],dtype='complex128') #Wave function in reciprocal space
+hk = np.zeros([NG,NG,NK],dtype='complex128') #Hamiltonian in terms of reciprocal space
+epsbk = np.zeros([NG,NK],dtype='float64') #Hamiltonian in terms of reciprocal space
+occbk = np.zeros([NG,NK],dtype='float64') #Occupation number
 
 Nocc = int(Nave/2.0)
-occbk[0:Nocc,:] = 2.0/float(NK1)
+occbk[0:Nocc,:] = 2.0/float(NK)
 
 def Make_vextr():
     alpha = 5.0e-2
     beta = 5.0e-2
     gamma = 1.0e-1
     v0 =  0.37
-    vextrloc = -v0*(1.0+np.cos(tpi*x1/a1))
+    vextrloc = -v0*(1.0+np.cos(tpi*x/a))
     if (flat > 0.0):
-        if (flat > a1):
+        if (flat > a):
             print('Error: flat is larger than a1.')
             sys.exit()
-        for ig in range(NG1):
-            if (x1[ig] < (a1-flat)):
-                vextrloc[ig] = -v0*(1.0 - np.cos(tpi*x1[ig]/(a1-flat)))
+        for ig in range(NG):
+            if (x[ig] < (a - flat)):
+                vextrloc[ig] = -v0*(1.0 - np.cos(tpi*x[ig]/(a-flat)))
             else : 
                 vextrloc[ig] = 0.0
         if(not cluster_mode):
@@ -137,34 +137,34 @@ def Make_vextr():
             plt.show()
     return vextrloc
 vextr = Make_vextr()
-vsG = np.fft.fft(vextr)/np.float(NG1)
+vsG = np.fft.fft(vextr)/np.float(NG)
 
 def Make_hk(Aloc):
-    vsGG = np.zeros([NG1,NG1],dtype='complex128') 
-    for ig1 in range(NG1):
-        gind = np.remainder(np.arange(NG1)+NG1-ig1,NG1)
-        for ig2 in range(NG1):
+    vsGG = np.zeros([NG,NG],dtype='complex128') 
+    for ig1 in range(NG):
+        gind = np.remainder(np.arange(NG) + NG - ig1, NG)
+        for ig2 in range(NG):
             igloc = gind[ig2]
             vsGG[ig1,ig2] = vsG[igloc] #This definition should be carefully checked 
-    for ik in range(NK1):
+    for ik in range(NK):
         hk[:,:,ik] = vsGG[:,:]
-        kloc = k1[ik] + Aloc
-        for ig1 in range(NG1):
-            hk[ig1,ig1,ik] = hk[ig1,ig1,ik] + 0.5*(G1[ig1]+kloc)**2
+        kloc = k[ik] + Aloc
+        for ig1 in range(NG):
+            hk[ig1,ig1,ik] = hk[ig1,ig1,ik] + 0.5*(G[ig1] + kloc)**2
     return hk
 hk = Make_hk(0.0)
 
 #Band calculation 
-for ik in range(NK1):
+for ik in range(NK):
     epsbk[:,ik], ubkG[:,:,ik] = np.linalg.eigh(hk[:,:,ik])
-ubkG = ubkG/np.sqrt(a1)*float(NG1) #Normalization
+ubkG = ubkG/np.sqrt(a)*float(NG) #Normalization
 Eg = np.amin(epsbk[Nocc,:])-np.amax(epsbk[Nocc-1,:])
 print('Eg = '+str(Eg)+' a.u. = '+str(Hartree*Eg)+' eV')
 
 #Plot the band
 def Band_plot():
     for ib in range(4):
-        plt.plot(k1,epsbk[ib,:]*Hartree)
+        plt.plot(k,epsbk[ib,:]*Hartree)
     plt.show()
 if(not cluster_mode):
     Band_plot()
@@ -201,7 +201,7 @@ print ('The CEP value is {:f} in a unit of tpi.'.format(phiCEP/tpi))
 print ('')
 print ('The field strength E1 is '+str(E)+' in atomic unit and '+str(E*Atomfield)+' in V/nm.')
 print ('Corresponding intensity is {:0.6e} in W/cm^2 '.format(E**2*halfepsc))
-print ('(E x a) is '+str(E*a1)+' in atomic unit and ' + str(E*a1*Hartree)+ ' in eV.')
+print ('(E x a) is '+str(E*a)+' in atomic unit and ' + str(E*a*Hartree)+ ' in eV.')
 print ('')
 print ('A parameter for the pulse duraion Tpulse is '+str(Tpulse)+' in atomic unit and '+str(Tpulse*Atomtime)+' in femtosecond.')
 print ('Corresponding energy is '+str(tpi/Tpulse)+' in a.u. and '+str(tpi/Tpulse*Hartree)+' in eV.')
@@ -228,8 +228,8 @@ At, Et = Make_AtEt()
 def AtEt_plot():
     plt.xlabel('fs')
     plt.plot(tt*Atomtime,At)
-    plt.plot(tt*Atomtime,b1*np.ones(NT)*b1/2.0)
-    plt.plot(tt*Atomtime,-b1*np.ones(NT)*b1/2.0)
+    plt.plot(tt*Atomtime,b*np.ones(NT)*b/2.0)
+    plt.plot(tt*Atomtime,-b*np.ones(NT)*b/2.0)
     plt.show()
     plt.xlabel('fs')
     plt.ylabel('V/nm')
@@ -238,68 +238,68 @@ def AtEt_plot():
 if (not cluster_mode):
     AtEt_plot()
 print('Etmax= '+str(np.amax(np.abs(Et)))+' a.u.= '+str(np.amax(np.abs(Et))*Atomfield)+' V/nm')
-print('Atmax= '+str(np.amax(np.abs(At)))+' a.u.= '+str(np.amax(np.abs(At))/b1)+' b1')
-print('Approximated Apek - Avalley = '+str(np.amax(At)-np.amin(At))+' a.u.= '+str((np.amax(At)-np.amin(At))/b1)+' b1')
-print('a1*Etmax= '+str(a1*np.amax(np.abs(Et)))+' a.u.')
+print('Atmax= '+str(np.amax(np.abs(At)))+' a.u.= '+str(np.amax(np.abs(At))/b)+' b')
+print('Approximated Apek - Avalley = '+str(np.amax(At)-np.amin(At))+' a.u.= '+str((np.amax(At)-np.amin(At))/b)+' b')
+print('a*Etmax= '+str(a*np.amax(np.abs(Et)))+' a.u.')
 print('Eg= '+str(Eg)+' a.u.')
 
 
 #sys.exit()
 #Relevant functions
 def occbkubkG_dns(occbkloc,ubkGloc):
-    dnsloc = np.zeros(NG1,dtype='float64')
+    dnsloc = np.zeros(NG,dtype='float64')
     work = np.empty_like(ubkGloc[:,0,0])
     NBactloc = np.shape(ubkGloc)[1]
-    for ik in range(NK1):
+    for ik in range(NK):
         for ib in range(NBactloc):
             work = np.fft.ifft(ubkGloc[:,ib,ik])
             dnsloc = dnsloc + occbk[ib,ik]*(np.abs(work))**2
     return dnsloc
 dns = occbkubkG_dns(occbk,ubkG)
-print('Check for dns, '+str(np.sum(dns)*H1))
+print('Check for dns, '+str(np.sum(dns)*H))
 
 def occbkubkG_J(occbkloc,ubkGloc,Aloc): #Exact formula should be checked=========
     Jloc = 0.0
-    for ik in range(NK1):
-        kloc = k1[ik] + Aloc
-        for ib in range(NG1):
-            Jloc = Jloc + occbk[ib,ik]*(np.sum(G1[:]*(np.abs(ubkGloc[:,ib,ik]))**2)*a1/float(NG1**2)+kloc)
-    return Jloc/a1
+    for ik in range(NK):
+        kloc = k[ik] + Aloc
+        for ib in range(NG):
+            Jloc = Jloc + occbk[ib,ik]*(np.sum(G[:]*(np.abs(ubkGloc[:,ib,ik]))**2)*a/float(NG**2)+kloc)
+    return Jloc/a
 J = occbkubkG_J(occbk,ubkG,0.0) #Matter current
 print('Check for current, '+str(J))
 
 def occbkubkG_Etot(occbkloc,ubkGloc,Aloc): #Exact formula should be checked=========
     Etotloc = 0.0
     hkloc = Make_hk(0.0)
-    for ik in range(NK1):
+    for ik in range(NK):
         hubGloc = np.dot(hkloc[:,:,ik],ubkGloc[:,:,ik])
-        for ib in range(NG1):
+        for ib in range(NG):
             Etotloc = Etotloc + occbk[ib,ik]*np.real(np.vdot(ubkGloc[:,ib,ik],hubGloc[:,ib]))
-    return Etotloc*a1/float(NG1**2) #orbital function is normalized to give correct number of particle in the cell.
+    return Etotloc*a/float(NG**2) #orbital function is normalized to give correct number of particle in the cell.
 Etot = occbkubkG_Etot(occbk,ubkG,0.0)
 print('Check for Etot, '+str(Etot))
 
 def h_U(h):
     eigs, coef = np.linalg.eigh(h*dt)
     U = np.exp(-zI*eigs[0])*np.outer(coef[:,0],np.conj(coef[:,0]))
-    for ib in range(1,NG1):
+    for ib in range(1,NG):
         U = U + np.exp(-zI*eigs[ib])*np.outer(coef[:,ib],np.conj(coef[:,ib]))
     return U
 
 #Time-evolution
-U = np.zeros([NG1,NG1],dtype='complex128') 
+U = np.zeros([NG,NG],dtype='complex128') 
 print('################################')
 print('Time-evolution starts.          ')
 for it in range(NT):
     Jt[it] = occbkubkG_J(occbk,ubkG,At[it])
     hk = Make_hk(At[it])
-    for ik in range(NK1):
+    for ik in range(NK):
         U = h_U(hk[:,:,ik])
         ubkG[:,:,ik] = np.dot(U,ubkG[:,:,ik])
     if(it%1000 == 0):
         dns = occbkubkG_dns(occbk,ubkG)
         Etot = occbkubkG_Etot(occbk,ubkG,At[it])
-        print(it,np.sum(dns)*H1, Jt[it], Etot)
+        print(it,np.sum(dns)*H, Jt[it], Etot)
 print('Time-evolution ends.            ')
 print('################################')
 np.savez(sys_name+'Jt.npz',tt=tt,Jt=Jt)
