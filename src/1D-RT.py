@@ -24,7 +24,6 @@ sys_name = '_'
 cluster_mode = False
 write_ASCII = False #Writting Data to not only *.npz but also ASCII files, only available for Jt
 Wannier_option = False #Polarization calculation from Wannier function
-IID_option = False #Intra- and Inter-band Decomposition
 a1 = 8.0 #Lattice constant
 flat = -1.0 #Length of flat potential
 NG1 = 12 #Number of grid point in both real/reciprocal space
@@ -72,12 +71,6 @@ elif (argc == 2):
                 cluster_mode = True
             else :
                 cluster_mode = False
-        if (str(text[i]) == 'only_TA') :
-            only_TA = str(text[i+1])
-            if (only_TA=='True'):
-                only_TA = True
-            else :
-                only_TA = False
         if (str(text[i]) == 'write_ASCII') :
             write_ASCII = str(text[i+1])
             if (write_ASCII=='True'):
@@ -90,12 +83,6 @@ elif (argc == 2):
                 Wannier_option = True
             else :
                 Wannier_option = False
-        if (str(text[i]) == 'IID_option') :
-            IID_option = str(text[i+1])
-            if (IID_option=='True'):
-                IID_option = True
-            else :
-                IID_option = False
         if (str(text[i]) == 'a1') :
             a1 = float(str(text[i+1]))
         if (str(text[i]) == 'flat') :
@@ -293,94 +280,6 @@ def wbX_Pb(X,wbX):
     Pb = Pb.T/a1*2.0
     return Pb
 
-def occbkubkG_JIIorg(occbkloc, ubkGloc, hkloc, Aloc):
-    Jtotloc = 0.0
-    Jintraloc = 0.0
-    Jinterloc = 0.0
-    nvloc = 0.0
-    ncloc = 0.0
-    eigvecubkovlp = np.zeros([NG1],dtype='complex128')
-    jalphabetamatdiag = np.zeros([NG1],dtype='float64')
-    for ik in range(NK1):
-        kloc = k1[ik] + Aloc
-        eigval, eigvec = np.linalg.eigh(hkloc[:,:,ik])
-        for ib in range(NG1):
-            jtot = np.sum(G1[:]*(np.abs(ubkGloc[:,ib,ik]))**2)
-            Jtotloc = Jtotloc + occbk[ib,ik]*(np.real(jtot)*a1/float(NG1**2) + kloc)
-            for ialpha in range(NG1):
-                jalphabetamatdiag[ialpha] = np.sum(G1*(np.abs(eigvec[:,ialpha]))**2) + kloc
-                eigvecubkovlp[ialpha] = np.vdot(eigvec[:,ialpha], ubkGloc[:,ib,ik])*np.sqrt(a1)/float(NG1)
-            jintra = np.sum(jalphabetamatdiag*(np.abs(eigvecubkovlp))**2)
-            Jintraloc = Jintraloc + occbk[ib,ik]*jintra
-            nvloc = nvloc + occbk[ib,ik]*np.sum((np.abs(eigvecubkovlp))**2)
-            ncloc = ncloc + (occbk[0,ik]-occbk[ib,ik])*np.sum((np.abs(eigvecubkovlp))**2)
-
-    Jinterloc = Jtotloc - Jintraloc
-    return Jtotloc/a1, Jintraloc/a1, Jinterloc/a1, nvloc, ncloc
-
-def occbkubkG_JII_correct(occbkloc, ubkGloc, hkloc, Aloc):
-    Jtotloc = 0.0
-    Jintraloc = 0.0
-    Jinterloc = 0.0
-    nvloc = 0.0
-    ncloc = 0.0
-    eigvecubkovlp = np.zeros([NG1],dtype='complex128')
-    jalphabetamatdiag = np.zeros([NG1],dtype='float64')
-    jalphabetamat = np.zeros([NG1,NG1],dtype='complex128')
-    for ik in range(NK1):
-        kloc = k1[ik] + Aloc
-        DM = np.zeros([NG1,NG1],dtype='complex128')
-        for ib in range(NG1):
-            jtot = np.sum(G1[:]*(np.abs(ubkGloc[:,ib,ik]))**2)
-            Jtotloc = Jtotloc + occbk[ib,ik]*(np.real(jtot)*a1/float(NG1**2) + kloc)
-
-        eigval, eigvec = np.linalg.eigh(hkloc[:,:,ik])
-        for ialpha in range(NG1):
-            for ibeta in range(NG1):
-                jalphabetamat[ialpha,ibeta] = np.sum(np.conj(eigvec[:,ialpha])*G1*eigvec[:,ibeta])
-                for ib in range(NG1):
-                    DM[ialpha,ibeta] = DM[ialpha,ibeta] + occbk[ib,ik]*\
-                        np.vdot(eigvec[:,ialpha], ubkGloc[:,ib,ik])*\
-                        np.vdot(ubkGloc[:,ib,ik], eigvec[:,ibeta])*a1/float(NG1**2)
-            jalphabetamat[ialpha,ialpha] = jalphabetamat[ialpha,ialpha] + kloc
-            jalphabetamatdiag[ialpha] = np.real(jalphabetamat[ialpha,ialpha])
-        temp = np.diag(np.dot(DM, jalphabetamat))
-        temp2 = np.real(np.diag(DM))
-#        Jintraloc = Jintraloc + np.real(np.sum(temp))
-        Jintraloc = Jintraloc + np.sum(jalphabetamatdiag*temp2)
-        nvloc = nvloc + np.sum(temp2[:Nocc])
-        ncloc = ncloc + np.sum(temp2[Nocc:])
-
-    Jinterloc = Jtotloc - Jintraloc
-    return Jtotloc/a1, Jintraloc/a1, Jinterloc/a1, nvloc, ncloc
-
-def occbkubkG_JII(occbkloc, ubkGloc, hkloc, Aloc):
-    Jtotloc = 0.0
-    Jintraloc = 0.0
-    Jinterloc = 0.0
-    nvloc = 0.0
-    ncloc = 0.0
-    jalphabetamatdiag = np.zeros([NG1],dtype='float64')
-    for ik in range(NK1):
-        kloc = k1[ik] + Aloc
-        for ib in range(NG1):
-            jtot = np.sum(G1[:]*(np.abs(ubkGloc[:,ib,ik]))**2)
-            Jtotloc = Jtotloc + occbk[ib,ik]*(np.real(jtot)*a1/float(NG1**2) + kloc)
-
-        DMdiag = np.zeros([NG1],dtype='float64')
-        eigval, eigvec = np.linalg.eigh(hkloc[:,:,ik])
-        for ialpha in range(NG1):
-            jalphabetamatdiag[ialpha] = np.sum(G1*(np.abs(eigvec[:,ialpha]))**2)+ kloc
-            for ib in range(NG1):
-                DMdiag[ialpha] = DMdiag[ialpha] + \
-                    occbk[ib,ik]*np.abs(np.vdot(eigvec[:,ialpha], ubkGloc[:,ib,ik]))**2*a1/float(NG1**2)
-        Jintraloc = Jintraloc + np.sum(jalphabetamatdiag*DMdiag)
-        nvloc = nvloc + np.sum(DMdiag[:Nocc])
-        ncloc = ncloc + np.sum(DMdiag[Nocc:])
-
-    Jinterloc = Jtotloc - Jintraloc
-    return Jtotloc/a1, Jintraloc/a1, Jinterloc/a1, nvloc, ncloc
-
 
 T = float(NT)*dt
 print('========Temporal grid information======')
@@ -400,11 +299,6 @@ Jt = np.zeros(NT,dtype='float64')
 if(Wannier_option):
     Pt = np.zeros(NT,dtype='float64')
     wbXt = np.zeros([NG1*NK1,NG1,NT],dtype='complex128') #Wannier function
-if(IID_option):
-    Jintrat = np.zeros(NT,dtype='float64')
-    Jintert = np.zeros(NT,dtype='float64')
-    nvt = np.zeros(NT,dtype='float64')
-    nct = np.zeros(NT,dtype='float64')
 # Conversion to atomic unit from SI input
 omegac1 = omegac1/Hartree #Conversion to atomic unit
 E1 = E1/Atomfield #Conversion to atomic unit
@@ -553,9 +447,6 @@ for it in range(NT):
         wbXt[:,:,it] = 1.0*wbX[:,:]
         Pb = wbX_Pb(X,wbX)
         Pt[it] = np.sum(Pb[0:Nocc])
-    if(IID_option):
-#        Jintra[it], Jinter[it] = occbkubkG_JII(occbk, ubkG, hk, At[it])
-        Jt2, Jintrat[it], Jintert[it], nvt[it], nct[it] = occbkubkG_JII(occbk, ubkG, hk, At[it])
     for ik in range(NK1):
         U = h_U(hk[:,:,ik])
         ubkG[:,:,ik] = np.dot(U,ubkG[:,:,ik])
@@ -565,13 +456,9 @@ for it in range(NT):
         print(it,np.sum(dns)*H1, Jt[it], Etot)
         if(Wannier_option):
             print('Pt = '+str(Pt[it]))
-        if(IID_option):
-            print(Jt[it], Jt2, Jintrat[it]) #debug
 print('Time-evolution ends.            ')
 print('################################')
 np.savez(sys_name+'Jt.npz',tt=tt,Jt=Jt)
-if(IID_option):
-    np.savez(sys_name+'JtIID.npz',tt=tt, Jt=Jt, Jintrat=Jintrat, Jintert=Jintert)
 if(write_ASCII):
     f = open(sys_name+'Jt.out','w')
     f.write('# tt[it], Jt[it], Et[it], At[it]  (it=1,NT) in atomic unit \n')
@@ -583,13 +470,6 @@ if(not cluster_mode):
     plt.xlabel('fs')
     plt.plot(tt*Atomtime,Jt)
     plt.show()
-    if(IID_option):
-        plt.xlabel('fs')
-        plt.plot(tt*Atomtime,Jt,label='total')
-        plt.plot(tt*Atomtime,Jintrat,label='intra')
-        plt.plot(tt*Atomtime,Jintert,label='inter')
-        plt.legend()
-        plt.show()
         
 
 if(Wannier_option):
@@ -636,11 +516,6 @@ Jt_filter = (envelope1+envelope2)*Jt
 #for it in range(NTpulse1):
 #    Jt_filter[it] = (np.cos(pi/(Tpulse1)*(tt[it]-Tpulse1/2.0)))**nenvelope*Jt[it]
 Jomega_filter = np.fft.fft(Jt_filter)
-if(IID_option):
-    Jintrat_filter = (envelope1+envelope2)*Jintrat
-    Jintert_filter = (envelope1+envelope2)*Jintert
-    Jintraomega_filter = np.fft.fft(Jintrat_filter)
-    Jinteromega_filter = np.fft.fft(Jintert_filter)
 
 
 print('Fourier transformation ends.    ')
@@ -662,28 +537,8 @@ def Jomega_plot():
     plt.plot(omega[:NT//2]*Hartree,np.abs(Jomega_filter[:NT//2]),label='J_filter(w)')
     plt.legend()
     plt.show()
-def Jomega_IID_plot():
-    plt.xlabel('Harmonic order')
-    plt.xlim(0,500.0)
-    plt.yscale('log')
-    plt.plot(omega[:NT//2]/omegac1,np.abs(Jomega_filter[:NT//2]),label='J_total(w)')
-    plt.plot(omega[:NT//2]/omegac1,np.abs(Jintraomega_filter[:NT//2]),label='J_intra(w)')
-    plt.plot(omega[:NT//2]/omegac1,np.abs(Jinteromega_filter[:NT//2]),label='J_inter(w)')
-    plt.legend()
-    plt.show()
-    plt.xlabel('eV')
-    plt.xlim(0,80.0)
-    plt.ylim(1.0e-15,10.0)
-    plt.yscale('log')
-    plt.plot(omega[:NT//2]*Hartree,np.abs(Jomega_filter[:NT//2]),label='J_total(w)')
-    plt.plot(omega[:NT//2]*Hartree,np.abs(Jintraomega_filter[:NT//2]),label='J_intra(w)')
-    plt.plot(omega[:NT//2]*Hartree,np.abs(Jinteromega_filter[:NT//2]),label='J_inter(w)')
-    plt.legend()
-    plt.show()
 if(not cluster_mode):
     Jomega_plot()
-    if(IID_option):
-        Jomega_IID_plot()
 
 def Gabor_transform(twidth,Nshift):
     JGaboromega = np.zeros([NT,Nshift],dtype='complex128')
