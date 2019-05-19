@@ -22,7 +22,6 @@ Atomfluence = halfepsc*Atomtime*1.0e-15 # J/cm^2 ,W/cm^2 * fs = femto J/cm^2
 #Default values
 sys_name = '_'
 cluster_mode = False
-only_TA = False #Trajectory Analysis (TA) is only peformed if this is True
 write_ASCII = False #Writting Data to not only *.npz but also ASCII files, only available for Jt
 Wannier_option = False #Polarization calculation from Wannier function
 IID_option = False #Intra- and Inter-band Decomposition
@@ -495,125 +494,6 @@ print('Approximated Apek - Avalley = '+str(np.amax(At)-np.amin(At))+' a.u.= '+st
 print('a1*Etmax= '+str(a1*np.amax(np.abs(Et)))+' a.u.')
 print('Eg= '+str(Eg)+' a.u.')
 
-def Trajectory_analysis(dk):
-    dk = dk*b1
-    omegainter = np.zeros([NT,NK1],dtype='float64')
-    Nexpand = 5
-    k1expand = np.zeros(Nexpand*NK1,dtype='float64')
-    epsbkexpand = np.zeros([NG1,Nexpand*NK1],dtype='float64')
-    for i in range(Nexpand):
-        k1expand[i*NK1:(i+1)*NK1] = 1.0*k1[0:NK1] + (i-(Nexpand-1)//2)*b1
-        epsbkexpand[:,i*NK1:(i+1)*NK1] = epsbk[:,0:NK1]
-    func = interpolate.interp1d(k1expand,epsbkexpand,kind='cubic')
-    for ik in range(NK1):
-        ib = Nocc-1
-        it = 0
-        ktemp = k1[ik] + At[it]
-        temp = func(ktemp)
-        omegainter[it,ik] = temp[ib]-temp[Nocc-1]
-        for it in range(1,NT):
-            ktemp = k1[ik] + At[it]
-            ktempold = k1[ik] + At[it-1]
-#            if(ktemp*ktempold<0.0):
-#                if (ib%2==1) :
-#                    ib = ib+1
-            if((ktemp-dk)*(ktempold-dk)<0.0):
-                if (ib%2==1) :
-                    ib = ib+1
-            if((ktemp+dk)*(ktempold+dk)<0.0):
-                if (ib%2==1) :
-                    ib = ib+1
-#            if((ktemp-0.5*b1)*(ktempold-0.5*b1)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-#            if((ktemp+0.5*b1)*(ktempold+0.5*b1)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-            if((ktemp-0.5*b1-dk)*(ktempold-0.5*b1-dk)<0):
-                if (ib%2==0) :
-                    ib = ib+1
-            if((ktemp-0.5*b1+dk)*(ktempold-0.5*b1+dk)<0):
-                if (ib%2==0) :
-                    ib = ib+1
-            if((ktemp+0.5*b1-dk)*(ktempold+0.5*b1-dk)<0):
-                if (ib%2==0) :
-                    ib = ib+1
-            if((ktemp+0.5*b1+dk)*(ktempold+0.5*b1+dk)<0):
-                if (ib%2==0) :
-                    ib = ib+1
-            temp = func(ktemp)
-            omegainter[it,ik] = temp[ib]-temp[Nocc-1]
-    return omegainter
-def Trajectory_analysis2(dk1,dk2,dk3):
-    kt = np.zeros([NT,NK1],dtype='float64')
-    for ik in range(NK1):
-        kt[:,ik] = 1.0*k1[ik] + At[:]
-    dk1 = dk1*b1
-    dk2 = dk2*b1
-    dk3 = dk3*b1
-    omegainter = np.zeros([NT,NK1],dtype='float64')
-    Nexpand = 5
-    k1expand = np.zeros(Nexpand*NK1,dtype='float64')
-    epsbkexpand = np.zeros([NG1,Nexpand*NK1],dtype='float64')
-    for i in range(Nexpand):
-        k1expand[i*NK1:(i+1)*NK1] = 1.0*k1[0:NK1] + (i-(Nexpand-1)//2)*b1
-        epsbkexpand[:,i*NK1:(i+1)*NK1] = epsbk[:,0:NK1]
-    func = interpolate.interp1d(k1expand,epsbkexpand,kind='cubic')
-    for ik in range(NK1):
-        ib = Nocc-1
-        ib0 = Nocc-1
-        it = 0
-        ktemp = k1[ik] + At[it]
-        temp = func(ktemp)
-        omegainter[it,ik] = temp[ib]-temp[ib0]
-        for it in range(1,NT):
-            ktemp = k1[ik] + At[it]
-            ktempold = k1[ik] + At[it-1]
-            if (ib == ib0):
-                if((ktemp-dk1)*(ktempold-dk1)<0.0):
-                    ib = ib+1
-                elif((ktemp+dk1)*(ktempold+dk1)<0.0):
-                    ib = ib+1
-            elif(ib == ib0 + 1):
-                if((ktemp-0.5*b1-dk2)*(ktempold-0.5*b1-dk2)<0):
-                    ib = ib+1
-                elif((ktemp-0.5*b1+dk2)*(ktempold-0.5*b1+dk2)<0):
-                    ib = ib+1
-                elif((ktemp+0.5*b1-dk2)*(ktempold+0.5*b1-dk2)<0):
-                    ib = ib+1
-                elif((ktemp+0.5*b1+dk2)*(ktempold+0.5*b1+dk2)<0):
-                    ib = ib+1
-            elif(ib == ib0 + 2):
-                if((ktemp-dk3)*(ktempold-dk3)<0.0):
-                    ib = ib+1
-                elif((ktemp+dk3)*(ktempold+dk3)<0.0):
-                    ib = ib+1
-#            if((ktemp-dk1)*(ktempold-dk1)<0.0):
-#                if (ib%2==1) :
-#                    ib = ib+1
-#            if((ktemp+dk1)*(ktempold+dk1)<0.0):
-#                if (ib%2==1) :
-#                    ib = ib+1
-#            if((ktemp-0.5*b1-dk2)*(ktempold-0.5*b1-dk2)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-#            if((ktemp-0.5*b1+dk2)*(ktempold-0.5*b1+dk2)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-#            if((ktemp+0.5*b1-dk2)*(ktempold+0.5*b1-dk2)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-#            if((ktemp+0.5*b1+dk2)*(ktempold+0.5*b1+dk2)<0):
-#                if (ib%2==0) :
-#                    ib = ib+1
-            temp = func(ktemp)
-            omegainter[it,ik] = temp[ib]-temp[ib0]
-    return kt,omegainter
-
-if (only_TA):
-    omegainter = Trajectory_analysis(0.0)
-    kt, omegainterg = Trajectory_analysis2(0.15,0.009,0.002)
-    sys.exit()
 
 #sys.exit()
 #Relevant functions
@@ -738,18 +618,6 @@ if(Wannier_option):
     np.savez(sys_name+'Jt2.npz',tt=tt,Jt2=Jt2)
     sys.exit()
 
-omegainter = Trajectory_analysis(0.0)
-#omegainterg = Trajectory_analysis(0.1)
-kt, omegainterg = Trajectory_analysis2(0.15,0.0,0.15)
-np.savez(sys_name+'Jtomegainter.npz',tt=tt,kt=kt,omegainter=omegainter,omegainterg=omegainterg)
-print('Trajectory analysis ends.       ')
-print('################################')
-
-def Trajectory_plot():
-    for ik in range(NK1):
-         plt.plot(tt*Atomtime,omegainter[:,ik]*Hartree,'b')
-    plt.show()
-
 #Taking filter in real-time
 omega = np.fft.fftfreq(NT)*(tpi/dt)
 envelope1 = 1.0 - 3.0*(tt/T)**2 + 2.0*(tt/T)**3
@@ -844,38 +712,6 @@ if(not cluster_mode):
     emax = 40.0
     Gaboranalys_plot(twidth,Nshift,emax)
 
-def GaborTrajectory_plot(twidth,Nshift,emax):
-    print('twidth ='+str(twidth)+' a.u. = '+str(twidth*Atomtime)+' fs')
-    print('2pi/twidth ='+str(tpi/twidth)+' a.u. = '+str(tpi/twidth*Hartree)+' e\
-V')
-    tshift, JGaboromega = Gabor_transform(twidth,Nshift)
-    plt.xlabel('fs')
-    plt.ylabel('eV')
-    plt.ylim(0.0,emax)
-    plt.contourf(tshift*Atomtime,omega[:NT//2]*Hartree,np.log10(np.abs(JGaboromega[:NT//2,:])+1.0e-18),50,cmap=plt.cm.jet)
-    plt.colorbar()
-    for ik in range(NK1):
-         plt.plot(tt*Atomtime,omegainter[:,ik]*Hartree,'w',alpha=0.4,lw=4)
-         plt.plot(tt*Atomtime,omegainterg[:,ik]*Hartree,'g',alpha=0.4,lw=2)
-    plt.show()
-
-def GaborTrajectory_powerplot(twidth,Nshift,emax,p):
-    print('twidth ='+str(twidth)+' a.u. = '+str(twidth*Atomtime)+' fs')
-    print('2pi/twidth ='+str(tpi/twidth)+' a.u. = '+str(tpi/twidth*Hartree)+' eV')
-    tshift, JGaboromega = Gabor_transform(twidth,Nshift)
-    plt.xlabel('fs')
-    plt.ylabel('eV')
-    plt.ylim(0.0,emax)
-    plt.contourf(tshift*Atomtime,omega[:NT//2]*Hartree,(np.abs(JGaboromega[:NT//2,:]))**p,50,cmap=plt.cm.jet)
-    plt.colorbar()
-    for ik in range(NK1):
-         plt.plot(tt*Atomtime,omegainter[:,ik]*Hartree,'w',alpha=0.4,lw=4)
-         plt.plot(tt*Atomtime,omegainterg[:,ik]*Hartree,'g',alpha=0.4,lw=2)
-    plt.show()
-
-if(not cluster_mode):
-    emax = 2.0*np.amax(omegainterg)*Hartree
-    GaborTrajectory_plot(twidth,Nshift,emax)
 
 print('Everything is done properly.    ')
 print('################################')
