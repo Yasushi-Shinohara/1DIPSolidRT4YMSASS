@@ -84,7 +84,7 @@ elif (argc == 2):
         if (str(text[i]) == 'NK') :
             NK = int(str(text[i+1]))
         if (str(text[i]) == 'Nave') :
-            Nave = int(str(text[i+1]))
+            Nave = int(float(str(text[i+1])))
         if (str(text[i]) == 'NT') :
             NT = int(str(text[i+1]))
         if (str(text[i]) == 'dt') :

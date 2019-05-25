@@ -1,0 +1,31 @@
+#An option for just calculating ground-state band calc.
+only_GS
+  False
+#The lattice constant in a.u.
+a
+  8.0
+#Number of plane wave, equivalentlly no. of spatial grids
+NG
+  12
+#Number of Brillouin zone sampling
+NK
+  40
+#Number of the particle in a cell
+Nave
+  4.0
+#Number of total time steps
+NT
+  4000 
+#Size of a time-step
+dt
+  5.0e-1 
+# Giving parameters for the field
+# (Center) photon energy in eV
+omegac
+  0.3875
+# Field strength in V/nm
+E
+  1.65 
+# Pulse duration **parameter** in fs
+Tpulse
+  40.00
