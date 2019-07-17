@@ -1,0 +1,37 @@
+tasks
+  0   ! SCF calc.
+  10  ! DoS calc.
+  20  ! Band-structure calc
+
+avec ! Primitive cell vector in Cartesian coordinate
+  0.0000 5.3435 5.3435
+  5.3435 0.0000 5.3435
+  5.3435 5.3435 0.0000
+
+atoms
+  2         !nspecies
+  'Ga.in'   !spfname
+  1         !natoms; atposl below
+  0.0 0.0 0.0
+  'As.in'
+  1
+  0.25 0.25 0.25
+
+ngridk !No. of k-grid
+  4 4 4
+
+vkloff !k-point origin shift
+  0.0 0.0 0.0
+
+wplot !Data for DoS
+  200 1 0
+  -0.5 0.5
+
+plot1d
+  5 200          !nvp1d, npp1d
+  0.25  0.25  0.0  !vlvp1d
+  0.0   0.0   0.0
+  0.25  0.25  0.5
+  0.5   0.5   0.5
+  0.0   0.0   0.0
+ 

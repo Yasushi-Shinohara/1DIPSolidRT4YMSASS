@@ -1,0 +1,75 @@
+ndtset 3
+
+#Common part for whole data-set
+#Definition of the unit cell
+acell 3*10.687         # This is equivalent to   10.687 10.687 10.687
+rprim  0.0  0.5  0.5   # FCC primitive vectors (to be scaled by acell)
+       0.5  0.0  0.5
+       0.5  0.5  0.0
+
+#Definition of the atom types
+ntypat 2          # There are two types of atom
+znucl 31 33       # The keyword "znucl" refers to the atomic number of the
+                  # possible type(s) of atom. The pseudopotential(s)
+                  # mentioned in the "files" file must correspond
+                  # to the type(s) of atom.
+
+#Definition of the atoms
+natom 2           # There are two atoms
+typat 1 2         # One is type 1 and another is type 2, that is, two Si.
+xred              # This keyword indicate that the location of the atoms
+                  # will follow, one triplet of number for each atom
+   0.0  0.0  0.0  # Triplet giving the REDUCED coordinate of atom 1.
+   0.25 0.25 0.25 # Triplet giving the REDUCED coordinate of atom 2.
+
+#Definition of the planewave basis set
+ecut 30.0         # Maximal kinetic energy cut-off, in Hartree
+
+#Dataset 1 : SCF for insulator
+kptopt1 1          # Option for the automatic generation of k points,
+                   # taking into account the symmetry
+nshiftk1 4
+shiftk1  0.5 0.5 0.5  # These shifts will be the same for all grids
+         0.5 0.0 0.0
+         0.0 0.5 0.0
+         0.0 0.0 0.5
+ngkpt1  4 4 4
+prtden1  1         # Print the density
+prtwf1  0         # No print the WFK
+toldfe1  1.0d-12   # Tolerance for energy difference
+nstep1 100          # Maximal number of SCF cycles
+
+
+#Dataset 2 : DoS
+iscf2 -3           # Without SCF with occ and wtk initialization
+getden2 -1         # Use density in just previous dataset
+occopt2 7          # Gaussian smearing for DoS
+tsmear2 4.0e-3     # Smearing parameter for occopt2
+kptopt2 1          # Option for the automatic generation of k points,
+                   # taking into account the symmetry
+nshiftk2 1
+shiftk2  0.0 0.0 0.0  # These shifts will be the same for all grids
+ngkpt2  4 4 4
+prtdos2  1        # Print the DoS
+prtden2  0        # No print the density
+prtwf2  0         # No print the WFK
+tolwfr2 1.0e-10   # Tolerance for wavefunction squared residual
+nband2 8          # No. of bands
+
+
+#Dataset 3 : Band structure
+iscf3   -2        # Without SCF for arbitrary k points
+getden3 -2        # Use density in second previous dataset, namely dataset 1
+kptopt3 -4
+nband3  8
+ndivk3   20 20 20 20   # 20, 20, 20 and 20 divisions of the 4 segments, delimited
+                       # by 5 points.
+kptbounds3  0.25  0.25  0.0  # X point
+            0.0   0.0   0.0  # Gamma point
+            0.25  0.25  0.5  # K point
+            0.5   0.5   0.5  # L point
+            0.0   0.0   0.0 # Gamma point in another cell.
+tolwfr3  1.0d-12
+prtwf3 0
+
+
