@@ -143,7 +143,7 @@ vsG = np.fft.fft(vextr)/np.float(NG)
 def Make_hk(Aloc):
     vsGG = np.zeros([NG,NG],dtype='complex128') 
     for ig1 in range(NG):
-        gind = np.remainder(np.arange(NG) + NG - ig1, NG)
+        gind = np.remainder(-np.arange(NG) + ig1, NG)
         for ig2 in range(NG):
             igloc = gind[ig2]
             vsGG[ig1,ig2] = vsG[igloc] #This definition should be carefully checked 
